@@ -1,9 +1,15 @@
 import json
 import time
 import os
+import sys
+import pyperclip
 from pathlib import Path
 from datetime import datetime
-from colorama import Fore, Style, init
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QFont
+from colorama import init
+import winsound
 
 # Initialize colorama for color support
 init(autoreset=True)
@@ -16,17 +22,132 @@ ITEMS_FILE_PATH = os.path.join(PROJECT_FOLDER, "items.json")
 TRAITS_FILE_PATH = os.path.join(PROJECT_FOLDER, "traits.json")
 
 RARITY_COLORS = {
-    2: Style.BRIGHT + Fore.WHITE,
-    3: Style.BRIGHT + Fore.GREEN,
-    4: Style.BRIGHT + Fore.BLUE,
-    5: Style.BRIGHT + Fore.MAGENTA, 
+    2: (255, 255, 255),  # White
+    3: (0, 255, 0),      # Green
+    4: (0, 0, 255),      # Blue
+    5: (255, 0, 255),    # Magenta
 }
 
 # Define the interval in seconds
 INTERVAL = 5
+ITEM_DISPLAY_TIME = 30  # seconds to keep item on screen
 
-# To track previously printed items
-previous_items = set()
+class OverlayWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        
+        # Make the window frameless and transparent
+        self.setWindowFlags(Qt.FramelessWindowHint | 
+                            Qt.WindowStaysOnTopHint | 
+                            Qt.Tool)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        
+        # Set up layout
+        layout = QVBoxLayout()
+        self.label = QLabel("Monitoring...")
+        self.label.setFont(QFont('Arial', 10))
+        layout.addWidget(self.label)
+        self.setLayout(layout)
+        
+        # Position in bottom right
+        screen = QApplication.primaryScreen().geometry()
+        self.move(900,0)
+        
+        # Timer for clearing display
+        self.clear_timer = QTimer(self)
+        self.clear_timer.setSingleShot(True)
+        self.clear_timer.timeout.connect(self.reset_text)
+        
+        # Track last update time
+        self.last_update_time = None
+
+    def update_text(self, text, color=None, play_sound=True):
+        if color:
+            self.label.setStyleSheet(f"color: rgb{color}; background-color: rgba(0,0,0,100);")
+        self.label.setText(text)
+        
+        # Optionally play sound
+        if play_sound:
+            winsound.Beep(100, 50)  # Frequency 1000Hz, duration 100ms
+        
+        # Record update time and start timer
+        self.last_update_time = datetime.now()
+        self.clear_timer.start(ITEM_DISPLAY_TIME * 1000)
+
+    def check_and_reset(self):
+        # If no recent update, do nothing
+        if not self.last_update_time:
+            return
+        
+        # Check if display time has elapsed
+        time_since_update = (datetime.now() - self.last_update_time).total_seconds()
+        if time_since_update >= ITEM_DISPLAY_TIME:
+            self.reset_text()
+
+    def reset_text(self):
+        self.label.setText("Monitoring...")
+        self.label.setStyleSheet("")
+        self.last_update_time = None
+
+class FlipBot:
+    def __init__(self, overlay):
+        self.overlay = overlay
+        self.previous_items = set()
+
+    def check_sales(self):
+        # Check if previous item should be cleared
+        self.overlay.check_and_reset()
+
+        try:
+            # Load data from files
+            list_data = load_json(LIST_FILE_PATH)
+            items_data = load_json(ITEMS_FILE_PATH)
+            traits_data = load_json(TRAITS_FILE_PATH)
+
+            if not list_data or not items_data or not traits_data:
+                return
+
+            # Filter sales data for flagged IDs
+            flagged_ids = []
+            prices = {}
+            for item_id, item_data in list_data.items():
+                sales = item_data.get("sales", [])
+                # Ensure there are at least two sales entries to compare
+                if len(sales) >= 2:
+                    first_price = sales[0].get("p")
+                    second_price = sales[1].get("p")
+                    if first_price is not None and second_price is not None:
+                        # Check if the first price is less than 50% of the second
+                        if first_price < 0.5 * second_price:
+                            flagged_ids.append(item_id)
+                            prices[item_id] = (first_price, second_price)
+
+            # Match flagged IDs with names, rarity, and traits
+            matched_items = match_ids_with_names_and_traits(flagged_ids, items_data, traits_data, list_data)
+
+            # Prepare new items for display
+            current_items = set(flagged_ids)
+            new_items = current_items - self.previous_items
+            self.previous_items.update(new_items)
+
+            # Update overlay
+            if new_items:
+                for item_id, name, rarity, trait_name in matched_items:
+                    if item_id in new_items:
+                        first_price, second_price = prices[item_id]
+                        rarity_color = RARITY_COLORS.get(rarity, (255, 255, 255))
+                        display_text = f"{name} | Lowest: {first_price}"
+                        
+                        # Copy item name to clipboard
+                        pyperclip.copy(name)
+                        
+                        self.overlay.update_text(display_text, rarity_color)
+                        print(f"New flagged item: {display_text}")
+
+        except Exception as e:
+            # Silent error handling - no sound, just text
+            self.overlay.update_text(f"Error: {str(e)}", play_sound=False)
+            print(f"Silent error: {e}")
 
 def load_json(file_path):
     # Load JSON data from a file.
@@ -51,65 +172,21 @@ def match_ids_with_names_and_traits(flagged_ids, items_data, traits_data, sales_
     
     return results
 
-def check_sales():
-    global previous_items
-    try:
-        # Load data from files
-        list_data = load_json(LIST_FILE_PATH)
-        items_data = load_json(ITEMS_FILE_PATH)
-        traits_data = load_json(TRAITS_FILE_PATH)
-
-        if not list_data or not items_data or not traits_data:
-            print("Data not available. Skipping this iteration...")
-            return
-
-        # Filter sales data for flagged IDs
-        flagged_ids = []
-        prices = {}
-        for item_id, item_data in list_data.items():
-            sales = item_data.get("sales", [])
-            # Ensure there are at least two sales entries to compare
-            if len(sales) >= 2:
-                first_price = sales[0].get("p")
-                second_price = sales[1].get("p")
-                if first_price is not None and second_price is not None:
-                    # Check if the first price is less than 50% of the second
-                    if first_price < 0.5 * second_price:
-                        flagged_ids.append(item_id)
-                        prices[item_id] = (first_price, second_price)
-
-        # Match flagged IDs with names, rarity, and traits
-        matched_items = match_ids_with_names_and_traits(flagged_ids, items_data, traits_data, list_data)
-
-        # Prepare new items for display
-        current_items = set(flagged_ids)
-        new_items = current_items - previous_items
-        previous_items.update(new_items)
-
-        # Print new items
-        if new_items:
-            print(f"New flagged items at {datetime.now().strftime('%H:%M')}:")
-            for item_id, name, rarity, trait_name in matched_items:
-                if item_id in new_items:
-                    first_price, second_price = prices[item_id]
-                    rarity_color = RARITY_COLORS.get(rarity, Style.BRIGHT + Fore.WHITE)
-                    print(
-                        f"{rarity_color}{name}{Style.RESET_ALL} | Lowest: {first_price} | Next: {second_price} | Trait: {trait_name}"
-                    )
-        else:
-            print(f"No new items at {datetime.now().strftime('%H:%M')}.")
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
 def start_monitoring():
-    print(f"Starting monitoring for files:")
-    print(f"- List file: {LIST_FILE_PATH}")
-    print(f"- Items file: {ITEMS_FILE_PATH}")
-    print(f"- Traits file: {TRAITS_FILE_PATH}")
-    while True:
-        check_sales()
-        time.sleep(INTERVAL)  # Check every 30 seconds
+    app = QApplication(sys.argv)
+    overlay = OverlayWidget()
+    overlay.show()
+
+    # Create FlipBot instance
+    flipbot = FlipBot(overlay)
+
+    # Set up timer for periodic checks
+    timer = QTimer()
+    timer.timeout.connect(flipbot.check_sales)
+    timer.start(INTERVAL * 1000)  # Convert to milliseconds
+
+    print("Monitoring started. Overlay is active.")
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
     start_monitoring()
