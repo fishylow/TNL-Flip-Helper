@@ -28,7 +28,7 @@ A price monitoring tool for Throne And Liberty's auction house that helps identi
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/throne-and-liberty-flipbot.git
+   git clone https://github.com/fishylow/Throne-And-Liberty-Flipbot.git
    cd throne-and-liberty-flipbot
    ```
 
