@@ -1,15 +1,18 @@
 import json
 import time
+import os
 from pathlib import Path
 from colorama import Fore, Style, init
 
 # Initialize colorama for color support
 init(autoreset=True)
 
-# Define file paths
-LIST_FILE_PATH = "path/to/list.json"
-ITEMS_FILE_PATH = "path/to/items.json"
-TRAITS_FILE_PATH = "path/to/traits.json"
+# Define project folder
+PROJECT_FOLDER = r"path/to/project"
+
+LIST_FILE_PATH = os.path.join(PROJECT_FOLDER, "list.json")
+ITEMS_FILE_PATH = os.path.join(PROJECT_FOLDER, "items.json")
+TRAITS_FILE_PATH = os.path.join(PROJECT_FOLDER, "traits.json")
 
 # Define the interval in seconds
 INTERVAL = 30
