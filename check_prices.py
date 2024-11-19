@@ -7,9 +7,9 @@ from colorama import Fore, Style, init
 init(autoreset=True)
 
 # Define file paths
-LIST_FILE_PATH = rf"C:\Users\neder\OneDrive\Dokumentumok\MarketSniper\Attempt2\list.json"
-ITEMS_FILE_PATH = rf"C:\Users\neder\OneDrive\Dokumentumok\MarketSniper\Attempt2\items.json"
-TRAITS_FILE_PATH = rf"C:\Users\neder\OneDrive\Dokumentumok\MarketSniper\Attempt2\traits.json"
+LIST_FILE_PATH = "path/to/list.json"
+ITEMS_FILE_PATH = "path/to/items.json"
+TRAITS_FILE_PATH = "path/to/traits.json"
 
 # Define the interval in seconds
 INTERVAL = 30
@@ -87,10 +87,10 @@ def check_sales():
         print(f"An error occurred: {e}")
 
 def start_monitoring():
-    print(f"Starting monitoring for files:")
-    print(f"- List file: {LIST_FILE_PATH}")
-    print(f"- Items file: {ITEMS_FILE_PATH}")
-    print(f"- Traits file: {TRAITS_FILE_PATH}")
+    print("Starting monitoring for files:")
+    print("- List file: {LIST_FILE_PATH}")
+    print("- Items file: {ITEMS_FILE_PATH}")
+    print("- Traits file: {TRAITS_FILE_PATH}")
     while True:
         check_sales()
         time.sleep(INTERVAL)
