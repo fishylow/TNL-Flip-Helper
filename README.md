@@ -49,7 +49,7 @@ A price monitoring tool for Throne And Liberty's auction house that helps identi
 
 5. Set your desired region in `script.js`:
    ```javascript
-   const GROUP = "30001"; // Change to your region code
+   const GROUP = "30001"; // EU Early Access by default
    ```
 
 ## Usage
