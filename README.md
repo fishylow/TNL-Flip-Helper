@@ -42,11 +42,9 @@ A price monitoring tool for Throne And Liberty's auction house that helps identi
    npm install devalue compress-json
    ```
 
-4. Configure the file paths in `check_prices.py`:
+4. Configure the project path in `check_prices.py`:
    ```python
-   LIST_FILE_PATH = "path/to/list.json"
-   ITEMS_FILE_PATH = "path/to/items.json"
-   TRAITS_FILE_PATH = "path/to/traits.json"
+   PROJECT_FOLDER = r"path/to/project/folder"
    ```
 
 5. Set your desired region in `script.js`:
