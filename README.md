@@ -1,4 +1,4 @@
-# Throne And Liberty Flipbot
+# Throne And Liberty Flip helper
 
 A price monitoring tool for Throne And Liberty's auction house that helps identify potentially underpriced items for market flipping opportunities.
 
