@@ -8,7 +8,7 @@ A price monitoring tool for Throne And Liberty's auction house that helps identi
 -  Real-time price monitoring and analysis
 -  Alerts for items priced below 50% of their normal market value
 -  Region-specific filtering
--  Color-coded console output for new alerts
+-  On screen UI with notification sound
 
 ## Prerequisites
 
@@ -78,14 +78,6 @@ The bot will:
 
 ### Region Selection
 Modify the `GROUP` constant in `script.js` to match your server region code.
-
-## Output Example
-
-```
--------------------Flagged items with unusally low price (<50% of normal):-------------------
-Lowest: 1000 | Next: 2500 | Item: Ancient Sword | Trait: Sharp Edge
-Lowest: 500 | Next: 1200 | Item: Magic Staff | Trait: Fire Damage
-```
 
 ## Disclaimer
 
