@@ -28,7 +28,7 @@ A price monitoring tool for Throne And Liberty's auction house that helps identi
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/throne-and-liberty-flipbot.git
+   git clone https://github.com/fishylow/Throne-And-Liberty-Flipbot.git
    cd throne-and-liberty-flipbot
    ```
 
@@ -42,16 +42,14 @@ A price monitoring tool for Throne And Liberty's auction house that helps identi
    npm install devalue compress-json
    ```
 
-4. Configure the file paths in `check_prices.py`:
+4. Configure the project path in `check_prices.py`:
    ```python
-   LIST_FILE_PATH = "path/to/list.json"
-   ITEMS_FILE_PATH = "path/to/items.json"
-   TRAITS_FILE_PATH = "path/to/traits.json"
+   PROJECT_FOLDER = r"path/to/project/folder"
    ```
 
 5. Set your desired region in `script.js`:
    ```javascript
-   const GROUP = "30001"; // Change to your region code
+   const GROUP = "30001"; // EU Early Access by default
    ```
 
 ## Usage
