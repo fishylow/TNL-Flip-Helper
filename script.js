@@ -2,7 +2,7 @@ import * as devalue from 'devalue';
 import { decompress } from 'compress-json';
 import fs from 'fs/promises';
 
-const INTERVAL = 30000; // Set refresh interval (e.g., 30 seconds)
+const INTERVAL = 5000; // Set refresh interval (e.g., 30 seconds)
 const GROUP = "30001"; // Region to filter for
 
 const fetchData = async () => {
