@@ -10,27 +10,31 @@ from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
 from colorama import init
 import winsound
+from normalize_file import load_json, merge_data
+from history_checker import fetch_and_analyze_auction_data
+import statistics
+from pprint import pprint
 
 # Initialize colorama for color support
 init(autoreset=True)
 
 # Define project folder
-PROJECT_FOLDER = r"C:\Users\neder\OneDrive\Dokumentumok\MarketSniper\Attempt2"
+PROJECT_FOLDER = r"path/folder"
 
 LIST_FILE_PATH = os.path.join(PROJECT_FOLDER, "list.json")
 ITEMS_FILE_PATH = os.path.join(PROJECT_FOLDER, "items.json")
 TRAITS_FILE_PATH = os.path.join(PROJECT_FOLDER, "traits.json")
 
 RARITY_COLORS = {
-    2: (255, 255, 255),  # White
-    3: (0, 255, 0),      # Green
-    4: (0, 0, 255),      # Blue
-    5: (255, 0, 255),    # Magenta
+    2: (255, 255, 255), # White
+    3: (50, 255, 50),   # Green
+    4: (0, 100, 255),   # Blue
+    5: (255, 50, 255),  # Magenta
 }
-
 # Define the interval in seconds
 INTERVAL = 5
 ITEM_DISPLAY_TIME = 30  # seconds to keep item on screen
+global ITER_COUNT
 
 class OverlayWidget(QWidget):
     def __init__(self):
@@ -45,7 +49,8 @@ class OverlayWidget(QWidget):
         # Set up layout
         layout = QVBoxLayout()
         self.label = QLabel("Monitoring...")
-        self.label.setFont(QFont('Arial', 10))
+        self.label.setFont(QFont('Arial', 14))
+        self.label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.label)
         self.setLayout(layout)
         
@@ -68,7 +73,7 @@ class OverlayWidget(QWidget):
         
         # Optionally play sound
         if play_sound:
-            winsound.Beep(100, 50)  # Frequency 1000Hz, duration 100ms
+            winsound.Beep(400, 50)  # Frequency 400Hz, duration 50ms
         
         # Record update time and start timer
         self.last_update_time = datetime.now()
@@ -93,84 +98,64 @@ class FlipBot:
     def __init__(self, overlay):
         self.overlay = overlay
         self.previous_items = set()
+        self.ITER_COUNT = 0
 
     def check_sales(self):
-        # Check if previous item should be cleared
         self.overlay.check_and_reset()
 
         try:
-            # Load data from files
-            list_data = load_json(LIST_FILE_PATH)
-            items_data = load_json(ITEMS_FILE_PATH)
-            traits_data = load_json(TRAITS_FILE_PATH)
+            # Load merged data using normalize_file's merge_data function
+            merged_data = merge_data()
 
-            if not list_data or not items_data or not traits_data:
+            if not merged_data:
                 return
 
-            # Filter sales data for flagged IDs
-            flagged_ids = []
-            prices = {}
-            for item_id, item_data in list_data.items():
-                sales = item_data.get("sales", [])
+            # Filter sales data for flagged items
+            flagged_items = []
+            for item in merged_data:
+                sales = item.get("prices_list", [])
                 # Ensure there are at least two sales entries to compare
                 if len(sales) >= 2:
-                    first_price = sales[0].get("p")
-                    second_price = sales[1].get("p")
-                    if first_price is not None and second_price is not None:
-                        # Check if the first price is less than 50% of the second
-                        if first_price < 0.5 * second_price:
-                            flagged_ids.append(item_id)
-                            prices[item_id] = (first_price, second_price)
+                    current_price = sales[0]
+                    last_price = sales[1]
+                    if current_price < 0.6 * last_price:
+                        flagged_items.append(item)
 
-            # Match flagged IDs with names, rarity, and traits
-            matched_items = match_ids_with_names_and_traits(flagged_ids, items_data, traits_data, list_data)
-
-            # Prepare new items for display
-            current_items = set(flagged_ids)
-            new_items = current_items - self.previous_items
-            self.previous_items.update(new_items)
-
-            # Update overlay
-            if new_items:
-                for item_id, name, rarity, trait_name in matched_items:
-                    if item_id in new_items:
-                        first_price, second_price = prices[item_id]
-                        rarity_color = RARITY_COLORS.get(rarity, (255, 255, 255))
-                        display_text = f"{name} | Lowest: {first_price}"
-                        
-                        # Copy item name to clipboard
-                        pyperclip.copy(name)
-                        
-                        self.overlay.update_text(display_text, rarity_color)
-                        print(f"New flagged item: {display_text}")
+            # Display flagged items
+            for item in flagged_items:
+                potential_profit = int((item["prices_list"][1] * 0.80) - item["prices_list"][0])
+                if item["parent_num"] in self.previous_items or potential_profit <= 9:
+                    continue
+                
+                
+                rarity_color = RARITY_COLORS.get(item["parent_rarity"], (255, 255, 255))
+                if self.ITER_COUNT > 0:
+                    if item["is_traited"]:
+                        history_data = fetch_and_analyze_auction_data(item["parent_id"],item["trait_id"])
+                        #print(f"Fetching traited: {item["parent_id"]} | {item["trait_id"]} | {item["parent_combined_name"]}")
+                    else:
+                        history_data = fetch_and_analyze_auction_data(item["parent_id"])                
+                        #print(f"Fetching traited: {item["parent_id"]} {item["parent_combined_name"]}")
+                display_text = f"({potential_profit}) {item["parent_combined_name"]} | Current: {item["prices_list"][0]} | Last: {item["prices_list"][1]} Count: {item["quantity"]}"
+                
+                if self.ITER_COUNT > 0 and history_data:
+                    if history_data["count"]: display_text += f" | 3DS: {history_data["count"]}"
+                    if history_data["median"]: display_text += f" | 3DM: {history_data["median"]}"
+                                
+                # Copy item name to clipboard
+                pyperclip.copy(item['parent_name'])
+                self.overlay.update_text(display_text, rarity_color)
+                self.previous_items.add(item["parent_num"])
+                print(f"{display_text}")
 
         except Exception as e:
             # Silent error handling - no sound, just text
-            self.overlay.update_text(f"Error: {str(e)}", play_sound=False)
+            self.overlay.update_text(f"Error: {str(e)}", play_sound=True)
+            #pprint(item)
             print(f"Silent error: {e}")
-
-def load_json(file_path):
-    # Load JSON data from a file.
-    if not Path(file_path).is_file():
-        print(f"File '{file_path}' not found.")
-        return {}
-    with open(file_path, "r") as file:
-        return json.load(file)
-
-def match_ids_with_names_and_traits(flagged_ids, items_data, traits_data, sales_data):
-    """Match flagged IDs with their names, traits, and rarity."""
-    id_to_item = {str(item["num"]): item for item in items_data}
-    results = []
-    
-    for item_id in flagged_ids:
-        item_data = id_to_item.get(item_id, {})
-        name = item_data.get("name", "Unknown Item")
-        rarity = item_data.get("rarity", 2)  # Default to 2 if no rarity is specified
-        first_trait = sales_data[item_id]["sales"][0].get("t")
-        trait_name = traits_data.get(str(first_trait), {}).get("name", "Unknown Trait")
-        results.append((item_id, name, rarity, trait_name))
-    
-    return results
+            #raise e
+        self.ITER_COUNT += 1
+        
 
 def start_monitoring():
     app = QApplication(sys.argv)
