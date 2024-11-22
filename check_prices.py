@@ -55,7 +55,7 @@ class OverlayWidget(QWidget):
         
         # Position in bottom right
         screen = QApplication.primaryScreen().geometry()
-        self.move(700,0)
+        self.move(600,0)
         
         # Timer for clearing display
         self.clear_timer = QTimer(self)
@@ -141,8 +141,12 @@ class FlipBot:
                 display_text_colorama = f"({potential_profit}) {item_name_colored} | Current: {item['prices_list'][0]} | Last: {item['prices_list'][1]} Count: {item['quantity']}"
                 
                 if self.ITER_COUNT > 0 and history_data:
-                    if history_data['count']: display_text += f" | 3DS: {history_data['count']}"
-                    if history_data['median']: display_text += f" | 3DM: {history_data['median']}"
+                    if history_data['count']: 
+                        display_text += f" | 3DS: {history_data['count']}"
+                        display_text_colorama += f" | 3DS: {history_data['count']}"
+                    if history_data['median']: 
+                        display_text += f" | 3DM: {history_data['median']}"
+                        display_text_colorama += f" | 3DM: {history_data['median']}"
                                 
                 # Copy item name to clipboard
                 pyperclip.copy(item['parent_name'])
@@ -153,8 +157,7 @@ class FlipBot:
         except Exception as e:
             # Silent error handling - no sound, just text
             #self.overlay.update_text(f"Error: {str(e)}", play_sound=True)
-            #pprint(item)
-            #print(f"Silent error: {e}")
+            print(f"Silent error: {e}")
             #raise e
             pass
         self.ITER_COUNT += 1
