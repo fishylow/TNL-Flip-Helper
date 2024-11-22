@@ -8,7 +8,7 @@ from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
-from colorama import init
+from colorama import init, Fore, Style
 import winsound
 from normalize_file import load_json, merge_data
 from history_checker import fetch_and_analyze_auction_data
@@ -25,6 +25,13 @@ RARITY_COLORS = {
     3: (50, 255, 50),      # Green
     4: (0, 100, 255),      # Blue
     5: (255, 50, 255),    # Magenta
+}
+
+RARITY_COLORS_COLORAMA = {
+    2: Fore.WHITE,  # White
+    3: Fore.GREEN,  # Green
+    4: Fore.BLUE,   # Blue
+    5: Fore.MAGENTA # Magenta
 }
 
 # Define the interval in seconds
@@ -52,7 +59,7 @@ class OverlayWidget(QWidget):
         
         # Position in bottom right
         screen = QApplication.primaryScreen().geometry()
-        self.move(900,0)
+        self.move(700,0)
         
         # Timer for clearing display
         self.clear_timer = QTimer(self)
@@ -119,37 +126,41 @@ class FlipBot:
 
             # Display flagged items
             for item in flagged_items:
-                potential_profit = int((item["prices_list"][1] * 0.80) - item["prices_list"][0])
-                if item["parent_num"] in self.previous_items or potential_profit <= 9:
+                potential_profit = int((item['prices_list'][1] * 0.80) - item['prices_list'][0])
+                if item['parent_num'] in self.previous_items or potential_profit <= 9:
                     continue
                 
                 
-                rarity_color = RARITY_COLORS.get(item["parent_rarity"], (255, 255, 255))
+                rarity_color = RARITY_COLORS.get(item['parent_rarity'], (255, 255, 255))
+                rarity_color_colorama = RARITY_COLORS_COLORAMA.get(item["parent_rarity"], Fore.WHITE)
+                item_name_colored = f"{rarity_color_colorama}{item['parent_combined_name']}{Style.RESET_ALL}"
                 if self.ITER_COUNT > 0:
-                    if item["is_traited"]:
-                        history_data = fetch_and_analyze_auction_data(item["questlog_id"],item["trait_id"])
-                        #print(f"Fetching traited: {item["parent_id"]} | {item["trait_id"]} | {item["parent_combined_name"]}")
+                    if item['is_traited']:
+                        history_data = fetch_and_analyze_auction_data(item['questlog_id'],item['trait_id'])
+                        #print(f"Fetching traited: {item['parent_id']} | {item['trait_id']} | {item['parent_combined_name']}")
                     else:
-                        history_data = fetch_and_analyze_auction_data(item["questlog_id"])                
-                        #print(f"Fetching traited: {item["parent_id"]} {item["parent_combined_name"]}")
-                display_text = f"({potential_profit}) {item["parent_combined_name"]} | Current: {item["prices_list"][0]} | Last: {item["prices_list"][1]} Count: {item["quantity"]}"
+                        history_data = fetch_and_analyze_auction_data(item['questlog_id'])                
+                        #print(f"Fetching traited: {item['parent_id']} {item['parent_combined_name']}")
+                display_text = f"({potential_profit}) {item['parent_combined_name']} | Current: {item['prices_list'][0]} | Last: {item['prices_list'][1]} Count: {item['quantity']}"
+                display_text_colorama = f"({potential_profit}) {item_name_colored} | Current: {item['prices_list'][0]} | Last: {item['prices_list'][1]} Count: {item['quantity']}"
                 
                 if self.ITER_COUNT > 0 and history_data:
-                    if history_data["count"]: display_text += f" | 3DS: {history_data["count"]}"
-                    if history_data["median"]: display_text += f" | 3DM: {history_data["median"]}"
+                    if history_data['count']: display_text += f" | 3DS: {history_data['count']}"
+                    if history_data['median']: display_text += f" | 3DM: {history_data['median']}"
                                 
                 # Copy item name to clipboard
                 pyperclip.copy(item['parent_name'])
                 self.overlay.update_text(display_text, rarity_color)
-                self.previous_items.add(item["parent_num"])
-                print(f"{display_text}")
+                self.previous_items.add(item['parent_num'])
+                print(f"{display_text_colorama}")
 
         except Exception as e:
             # Silent error handling - no sound, just text
-            self.overlay.update_text(f"Error: {str(e)}", play_sound=True)
+            #self.overlay.update_text(f"Error: {str(e)}", play_sound=True)
             #pprint(item)
-            print(f"Silent error: {e}")
+            #print(f"Silent error: {e}")
             #raise e
+            pass
         self.ITER_COUNT += 1
         
 
