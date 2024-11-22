@@ -5,11 +5,12 @@ from pathlib import Path
 # Initialize colorama for color support
 
 # Define project folder
-PROJECT_FOLDER = r"C:/Users/Sved/Downloads/Throne-And-Liberty-Flipbot-main/Throne-And-Liberty-Flipbot-main"
+PROJECT_FOLDER = Path(__file__).parent
 
-LIST_FILE_PATH = os.path.join(PROJECT_FOLDER, "list.json")
-ITEMS_FILE_PATH = os.path.join(PROJECT_FOLDER, "items.json")
-TRAITS_FILE_PATH = os.path.join(PROJECT_FOLDER, "traits.json")
+LIST_FILE_PATH = PROJECT_FOLDER / "list.json"
+ITEMS_FILE_PATH = PROJECT_FOLDER / "items.json"
+TRAITS_FILE_PATH = PROJECT_FOLDER / "traits.json"
+QUESTLOG_DB_FILE_PATH = PROJECT_FOLDER / "questlog_db.json"
 
 DEBUG = False
 
@@ -28,6 +29,7 @@ def merge_data():
     price_data = load_json(LIST_FILE_PATH)
     items_data = load_json(ITEMS_FILE_PATH)
     traits_data = load_json(TRAITS_FILE_PATH)
+    questlog_data = load_json(QUESTLOG_DB_FILE_PATH)
     
     def fetch_prices(parent_id):
         record = price_data.get(str(parent_id),{})
@@ -45,6 +47,7 @@ def merge_data():
             "parent_icon": item["icon"],
             "rarity": item["rarity"],
             "is_traited": False,
+            "questlog_id": questlog_data.get(item["name"])
         }
         
         if item["traits"]:
@@ -69,6 +72,7 @@ def merge_data():
     if DEBUG: 
         with open("normalized_list.json", "w") as json_file:
             json.dump(NORMALIZED_LIST, json_file, indent=4)
+            print("ok")
             
     #print("Total Generated List Length:", len(NORMALIZED_LIST))
     return NORMALIZED_LIST

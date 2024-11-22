@@ -6,7 +6,7 @@ from pprint import pprint
 
 def fetch_and_analyze_auction_data(item_id, trait_id=None):
     url = "https://questlog.gg/throne-and-liberty/api/trpc/actionHouse.getAuctionItem"
-    item_id = item_id.replace("traitextract","TraitExtract").replace("arena","Arena").replace("blueprint","BluePrint").replace("_kc","_kC")
+    item_id = item_id
     if trait_id:
         params = {
             "input": json.dumps({
