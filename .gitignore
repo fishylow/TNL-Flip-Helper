@@ -3,3 +3,6 @@ list.json
 regions.json
 total.json
 traits.json
+venv
+node_modules
+*.pyc
