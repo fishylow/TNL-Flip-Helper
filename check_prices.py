@@ -174,7 +174,7 @@ class FlipBot:
             # Silent error handling - no sound, just text
             #self.overlay.update_text(f"Error: {str(e)}", play_sound=True)
             print(f"Silent error: {e}")
-            raise e
+            #raise e
             pass
         self.ITER_COUNT += 1
         
