@@ -19,18 +19,14 @@ from pprint import pprint
 init(autoreset=True)
 
 # Define project folder
-PROJECT_FOLDER = r"path/folder"
-
-LIST_FILE_PATH = os.path.join(PROJECT_FOLDER, "list.json")
-ITEMS_FILE_PATH = os.path.join(PROJECT_FOLDER, "items.json")
-TRAITS_FILE_PATH = os.path.join(PROJECT_FOLDER, "traits.json")
 
 RARITY_COLORS = {
-    2: (255, 255, 255), # White
-    3: (50, 255, 50),   # Green
-    4: (0, 100, 255),   # Blue
-    5: (255, 50, 255),  # Magenta
+    2: (255, 255, 255),  # White
+    3: (50, 255, 50),      # Green
+    4: (0, 100, 255),      # Blue
+    5: (255, 50, 255),    # Magenta
 }
+
 # Define the interval in seconds
 INTERVAL = 5
 ITEM_DISPLAY_TIME = 30  # seconds to keep item on screen
@@ -131,10 +127,10 @@ class FlipBot:
                 rarity_color = RARITY_COLORS.get(item["parent_rarity"], (255, 255, 255))
                 if self.ITER_COUNT > 0:
                     if item["is_traited"]:
-                        history_data = fetch_and_analyze_auction_data(item["parent_id"],item["trait_id"])
+                        history_data = fetch_and_analyze_auction_data(item["questlog_id"],item["trait_id"])
                         #print(f"Fetching traited: {item["parent_id"]} | {item["trait_id"]} | {item["parent_combined_name"]}")
                     else:
-                        history_data = fetch_and_analyze_auction_data(item["parent_id"])                
+                        history_data = fetch_and_analyze_auction_data(item["questlog_id"])                
                         #print(f"Fetching traited: {item["parent_id"]} {item["parent_combined_name"]}")
                 display_text = f"({potential_profit}) {item["parent_combined_name"]} | Current: {item["prices_list"][0]} | Last: {item["prices_list"][1]} Count: {item["quantity"]}"
                 
