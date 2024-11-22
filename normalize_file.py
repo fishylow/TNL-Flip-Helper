@@ -1,5 +1,5 @@
 import json
-import os
+import subprocess
 from pathlib import Path
 
 # Initialize colorama for color support
@@ -25,6 +25,16 @@ def load_json(file_path):
 
 
 def merge_data():
+    process = subprocess.Popen(['node', 'script.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    try:
+        # Wait for the process to complete (optional timeout)
+        stdout, stderr = process.communicate(timeout=10)  # Optional: use a timeout to avoid hanging
+        print("Node.js output:", stdout)
+    except subprocess.TimeoutExpired:
+        # Terminate the process if it takes too long
+        process.kill()
+        print("Node.js script took too long and was terminated.")
+    
     NORMALIZED_LIST = []
     price_data = load_json(LIST_FILE_PATH)
     items_data = load_json(ITEMS_FILE_PATH)

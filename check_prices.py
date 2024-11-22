@@ -1,19 +1,15 @@
-import json
-import time
-import os
+
 import sys
 import pyperclip
-from pathlib import Path
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
 from colorama import init, Fore, Style
 import winsound
-from normalize_file import load_json, merge_data
+from normalize_file import merge_data
 from history_checker import fetch_and_analyze_auction_data
-import statistics
-from pprint import pprint
+
 
 # Initialize colorama for color support
 init(autoreset=True)
