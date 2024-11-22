@@ -39,11 +39,4 @@ const fetchData = async () => {
         console.error('Error fetching or saving data:', error);
     }
 };
-
-const startAutoRefresh = () => {
-    console.log('Starting auto-refresh...');
-    fetchData(); // Fetch immediately on startup
-    setInterval(fetchData, INTERVAL); // Fetch periodically
-};
-
-startAutoRefresh();
+fetchData(); // Fetch immediately on startup
